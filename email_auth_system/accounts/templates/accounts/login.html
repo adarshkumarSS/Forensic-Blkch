@@ -1,0 +1,92 @@
+{% extends 'accounts/auth_base.html' %}
+{% load static %}
+
+{% block title %}Login - Government Auth System{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="auth-card-header">
+        <img src="{% static 'accounts/images/gov-logo.png' %}" alt="Government Logo" class="auth-logo">
+        <h2>Login</h2>
+        <p>Use your official government email</p>
+    </div>
+
+    <form method="post" class="auth-form" id="loginForm">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+        <div class="auth-error">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label for="id_username">Email Address</label>
+            <input type="email" name="username" id="id_username" required 
+                   placeholder="user@tnpolice.gov.in" autocomplete="email">
+            {% if form.username.errors %}
+            <div class="error-message">{{ form.username.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="id_password">Password</label>
+            <div class="password-input">
+                <input type="password" name="password" id="id_password" required 
+                       placeholder="Enter your password" autocomplete="current-password">
+                <button type="button" class="toggle-password" aria-label="Toggle password visibility">
+                    <i class="eye-icon">👁️</i>
+                </button>
+            </div>
+            {% if form.password.errors %}
+            <div class="error-message">{{ form.password.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-options">
+            <div class="remember-me">
+                <input type="checkbox" id="rememberMe" name="remember_me">
+                <label for="rememberMe">Remember me</label>
+            </div>
+            <a href="#" class="forgot-password">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="auth-button">Login</button>
+
+        <div class="auth-footer-links">
+            <p>Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Domain suggestion for email input
+        const emailInput = document.getElementById('id_username');
+        const domainSuggestions = [
+            'tnpolice.gov.in',
+            'forensic.tn.gov.in',
+            'aij.gov.in',
+            'nic.in',
+            'tn.gov.in',
+            'gov.in'
+        ];
+
+        emailInput.addEventListener('input', function(e) {
+            const input = e.target.value;
+            if (input.includes('@')) {
+                const partialDomain = input.split('@')[1];
+                if (partialDomain) {
+                    const matchingDomains = domainSuggestions.filter(domain => domain.startsWith(partialDomain))
+                    if (matchingDomains.length > 0) {
+                        // You could implement a dropdown suggestion here
+                        console.log('Suggested domains:', matchingDomains);
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

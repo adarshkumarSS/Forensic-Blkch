@@ -1,0 +1,154 @@
+{% extends 'accounts/auth_base.html' %}
+{% load static %}
+
+{% block title %}Forensic Case Management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'accounts/css/case_management.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="case-management-container">
+    <!-- Left Sidebar - Folder Structure -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3>Case Explorer</h3>
+            <button id="newCaseBtn" class="sidebar-button">
+                <i class="fas fa-plus"></i> New Case
+            </button>
+        </div>
+        
+        <div class="folder-tree">
+            <ul class="tree-view">
+                <li class="tree-item">
+                    <span class="tree-label active"><i class="fas fa-folder-open"></i> Active Cases</span>
+                    <ul class="subtree">
+                        {% for case in active_cases %}
+                        <li class="tree-item" data-case-id="{{ case.id }}">
+                            <span class="tree-label"><i class="fas fa-folder"></i> {{ case.case_number }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                <li class="tree-item">
+                    <span class="tree-label"><i class="fas fa-folder"></i> Closed Cases</span>
+                    <ul class="subtree">
+                        {% for case in closed_cases %}
+                        <li class="tree-item" data-case-id="{{ case.id }}">
+                            <span class="tree-label"><i class="fas fa-folder"></i> {{ case.case_number }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                <li class="tree-item">
+                    <span class="tree-label"><i class="fas fa-folder"></i> Archived Cases</span>
+                    <ul class="subtree">
+                        {% for case in archived_cases %}
+                        <li class="tree-item" data-case-id="{{ case.id }}">
+                            <span class="tree-label"><i class="fas fa-folder"></i> {{ case.case_number }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <div class="content-header">
+            <h2 id="caseTitle">Forensic Case Management System</h2>
+            <div class="header-actions">
+                <button id="refreshBtn" class="action-button">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <div class="case-details" id="caseDetails">
+            <!-- Default view when no case is selected -->
+            <div class="welcome-message">
+                <img src="{% static 'accounts/images/forensic-icon.png' %}" alt="Forensic Icon">
+                <h3>Welcome to Forensic Case Management</h3>
+                <p>Select a case from the sidebar or create a new case to get started</p>
+            </div>
+
+            <!-- Case detail content will be loaded here dynamically -->
+        </div>
+    </div>
+</div>
+
+<!-- New Case Modal -->
+<div class="modal" id="newCaseModal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3>Create New Forensic Case</h3>
+        <form id="caseForm" method="post" action="{% url 'create_case' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="case_number">Case Number</label>
+                <input type="text" id="case_number" name="case_number" required>
+            </div>
+            <div class="form-group">
+                <label for="case_name">Case Name</label>
+                <input type="text" id="case_name" name="case_name" required>
+            </div>
+            <div class="form-group">
+                <label for="crime_type">Crime Type</label>
+                <select id="crime_type" name="crime_type" required>
+                    <option value="">Select crime type</option>
+                    <option value="cyber">Cyber Crime</option>
+                    <option value="homicide">Homicide</option>
+                    <option value="fraud">Financial Fraud</option>
+                    <option value="narcotics">Narcotics</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="description">Case Description</label>
+                <textarea id="description" name="description" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="officer_in_charge">Officer In Charge</label>
+                <input type="text" id="officer_in_charge" name="officer_in_charge" value="{{ user.email }}" readonly>
+            </div>
+            <button type="submit" class="submit-button">Create Case</button>
+        </form>
+    </div>
+</div>
+
+<!-- Case Detail Template (Hidden) -->
+<div id="caseDetailTemplate" style="display:none;">
+    <div class="case-header">
+        <h3 class="detail-case-number">Case #: <span id="displayCaseNumber"></span></h3>
+        <div class="case-status-badge" id="statusBadge"></div>
+    </div>
+    
+    <div class="case-tabs">
+        <button class="tab-button active" data-tab="overview">Overview</button>
+        <button class="tab-button" data-tab="evidence">Evidence</button>
+        <button class="tab-button" data-tab="notes">Notes</button>
+        <button class="tab-button" data-tab="timeline">Timeline</button>
+    </div>
+    
+    <div class="tab-content active" id="overviewTab">
+        <!-- Overview content will be loaded here -->
+    </div>
+    
+    <div class="tab-content" id="evidenceTab">
+        <!-- Evidence content will be loaded here -->
+    </div>
+    
+    <div class="tab-content" id="notesTab">
+        <!-- Notes content will be loaded here -->
+    </div>
+    
+    <div class="tab-content" id="timelineTab">
+        <!-- Timeline content will be loaded here -->
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'accounts/js/case_management.js' %}"></script>
+{% endblock %}

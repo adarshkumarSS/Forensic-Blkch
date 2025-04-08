@@ -1,0 +1,184 @@
+{% extends 'accounts/auth_base.html' %}
+{% load static %}
+
+{% block title %}Register - Government Auth System{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="auth-card-header">
+        <img src="{% static 'accounts/images/gov-logo.png' %}" alt="Government Logo" class="auth-logo">
+        <h2>Create Account</h2>
+        <p>Use your official government email</p>
+    </div>
+
+    <form method="post" class="auth-form" id="registrationForm">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+        <div class="auth-error">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label for="id_email">Official Email</label>
+            <input type="email" name="email" id="id_email" required 
+                   placeholder="user@tnpolice.gov.in" autocomplete="email"
+                   value="{{ form.email.value|default_if_none:'' }}">
+            {% if form.email.errors %}
+            <div class="error-message">{{ form.email.errors }}</div>
+            {% endif %}
+            <div class="domain-hint">
+                Allowed domains: 
+                <span class="domain-tag">tnpolice.gov.in</span>
+                <span class="domain-tag">forensic.tn.gov.in</span>
+                <span class="domain-tag">aij.gov.in</span>
+                <span class="domain-tag">nic.in</span>
+                <span class="domain-tag">tn.gov.in</span>
+                <span class="domain-tag">gov.in</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="id_password1">Password</label>
+            <div class="password-input">
+                <input type="password" name="password1" id="id_password1" required 
+                       placeholder="Create password" autocomplete="new-password">
+                <button type="button" class="toggle-password" aria-label="Toggle password visibility">
+                    <i class="eye-icon">👁️</i>
+                </button>
+            </div>
+            {% if form.password1.errors %}
+            <div class="error-message">{{ form.password1.errors }}</div>
+            {% endif %}
+            <div class="password-hints">
+                <p class="hint-title">Password must contain:</p>
+                <ul class="hint-list">
+                    <li class="hint-item" data-rule="length">At least 8 characters</li>
+                    <li class="hint-item" data-rule="numeric">At least 1 number</li>
+                    <li class="hint-item" data-rule="uppercase">At least 1 uppercase letter</li>
+                    <li class="hint-item" data-rule="special">At least 1 special character</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="id_password2">Confirm Password</label>
+            <div class="password-input">
+                <input type="password" name="password2" id="id_password2" required 
+                       placeholder="Re-enter password" autocomplete="new-password">
+                <button type="button" class="toggle-password" aria-label="Toggle password visibility">
+                    <i class="eye-icon">👁️</i>
+                </button>
+            </div>
+            {% if form.password2.errors %}
+            <div class="error-message">{{ form.password2.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group terms-group">
+            <input type="checkbox" id="id_terms" name="terms" required>
+            <label for="id_terms">
+                I agree to the <a href="#" class="terms-link">Terms of Service</a> and 
+                <a href="#" class="terms-link">Privacy Policy</a>
+            </label>
+            {% if form.terms.errors %}
+            <div class="error-message">{{ form.terms.errors }}</div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="auth-button" id="registerButton">Create Account</button>
+
+        <div class="auth-footer-links">
+            <p>Already have an account? <a href="{% url 'login' %}" class="auth-link">Sign in</a></p>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password visibility toggle
+    const togglePasswordButtons = document.querySelectorAll('.toggle-password');
+    
+    togglePasswordButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const passwordInput = this.parentElement.querySelector('input');
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle eye icon
+            const eyeIcon = this.querySelector('.eye-icon');
+            eyeIcon.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
+        });
+    });
+
+    // Password strength validation
+    const password1Input = document.getElementById('id_password1');
+    const passwordHints = document.querySelectorAll('.hint-item');
+    const allowedDomains = [
+        'tnpolice.gov.in',
+        'forensic.tn.gov.in',
+        'aij.gov.in',
+        'nic.in',
+        'tn.gov.in',
+        'gov.in'
+    ];
+
+    password1Input.addEventListener('input', function() {
+        const password = this.value;
+        
+        // Check length
+        const lengthValid = password.length >= 8;
+        updateHint('length', lengthValid);
+        
+        // Check for numbers
+        const hasNumber = /\d/.test(password);
+        updateHint('numeric', hasNumber);
+        
+        // Check for uppercase
+        const hasUpper = /[A-Z]/.test(password);
+        updateHint('uppercase', hasUpper);
+        
+        // Check for special chars
+        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+        updateHint('special', hasSpecial);
+    });
+
+    function updateHint(rule, isValid) {
+        const hint = document.querySelector(`.hint-item[data-rule="${rule}"]`);
+        if (isValid) {
+            hint.classList.add('valid');
+        } else {
+            hint.classList.remove('valid');
+        }
+    }
+
+    // Email domain validation
+    const emailInput = document.getElementById('id_email');
+    emailInput.addEventListener('blur', function() {
+        const email = this.value;
+        if (email.includes('@')) {
+            const domain = email.split('@')[1];
+            if (!allowedDomains.includes(domain)) {
+                this.setCustomValidity('Please use an official government email domain');
+                this.reportValidity();
+            } else {
+                this.setCustomValidity('');
+            }
+        }
+    });
+
+    // Form submission enhancement
+    const form = document.getElementById('registrationForm');
+    form.addEventListener('submit', function(e) {
+        const termsChecked = document.getElementById('id_terms').checked;
+        if (!termsChecked) {
+            e.preventDefault();
+            alert('You must agree to the terms and conditions');
+        }
+    });
+});
+</script>
+{% endblock %}

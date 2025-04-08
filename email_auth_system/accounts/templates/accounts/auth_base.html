@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Government Auth System{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'accounts/css/auth.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="auth-container">
+        <header class="auth-header">
+            <h1>Government Authentication System</h1>
+            <p>Secure access for authorized personnel only</p>
+        </header>
+
+        <main class="auth-main">
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="auth-footer">
+            <p>© 2023 Government Auth System. All rights reserved.</p>
+            <p>For official use only</p>
+        </footer>
+    </div>
+
+    <script src="{% static 'accounts/js/auth.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
