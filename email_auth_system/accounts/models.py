@@ -56,3 +56,28 @@ class ForensicCase(models.Model):
     
     def __str__(self):
         return f"{self.case_number} - {self.case_name}"
+
+
+class Case(models.Model):
+    CASE_STATUS = (
+        ('active', 'Active'),
+        ('closed', 'Closed'),
+        ('archived', 'Archived'),
+    )
+
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    case_number = models.CharField(max_length=50, unique=True)
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=10, choices=CASE_STATUS, default='active')
+    location = models.CharField(max_length=100, blank=True)
+    incident_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.case_number} - {self.title}"
+
+    class Meta:
+        ordering = ['-created_at']

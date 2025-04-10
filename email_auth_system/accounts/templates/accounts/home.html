@@ -1,154 +1,205 @@
 {% extends 'accounts/auth_base.html' %}
 {% load static %}
 
-{% block title %}Forensic Case Management{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'accounts/css/case_management.css' %}">
-{% endblock %}
-
 {% block content %}
-<div class="case-management-container">
-    <!-- Left Sidebar - Folder Structure -->
+<div class="dashboard-container">
     <div class="sidebar">
-        <div class="sidebar-header">
-            <h3>Case Explorer</h3>
-            <button id="newCaseBtn" class="sidebar-button">
+        <!-- Case Folders -->
+        <div class="case-folders">
+            <!-- Active Cases -->
+            <div class="folder-section">
+                <h3 class="folder-header active" data-folder="active">
+                    <i class="fas fa-folder-open"></i> Active Cases
+                    <span class="badge">{{ active_cases.count }}</span>
+                </h3>
+                <ul id="active-folder" class="case-list">
+                    {% for case in active_cases %}
+                    <li class="case-item" 
+                        onclick="selectCase('{{ case.id }}')"
+                        ondblclick="viewCaseDetails('{{ case.id }}')">
+                        <div class="case-info">
+                            <span class="case-number">{{ case.case_number }}</span>
+                            <span class="case-title">{{ case.title|truncatechars:25 }}</span>
+                            {% if case.location %}
+                            <span class="case-location">📍 {{ case.location }}</span>
+                            {% endif %}
+                        </div>
+                        <span class="case-status active">Active</span>
+                    </li>
+                    {% empty %}
+                    <li class="empty-folder">No active cases</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Closed Cases -->
+            <div class="folder-section">
+                <h3 class="folder-header" data-folder="closed">
+                    <i class="fas fa-folder"></i> Closed Cases
+                    <span class="badge">{{ closed_cases.count }}</span>
+                </h3>
+                <ul id="closed-folder" class="case-list" style="display: none;">
+                    {% for case in closed_cases %}
+                    <li class="case-item"
+                        onclick="selectCase('{{ case.id }}')"
+                        ondblclick="viewCaseDetails('{{ case.id }}')">
+                        <div class="case-info">
+                            <span class="case-number">{{ case.case_number }}</span>
+                            <span class="case-title">{{ case.title|truncatechars:25 }}</span>
+                            {% if case.location %}
+                            <span class="case-location">📍 {{ case.location }}</span>
+                            {% endif %}
+                        </div>
+                        <span class="case-status closed">Closed</span>
+                    </li>
+                    {% empty %}
+                    <li class="empty-folder">No closed cases</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Archived Cases -->
+            <div class="folder-section">
+                <h3 class="folder-header" data-folder="archived">
+                    <i class="fas fa-folder"></i> Archived Cases
+                    <span class="badge">{{ archived_cases.count }}</span>
+                </h3>
+                <ul id="archived-folder" class="case-list" style="display: none;">
+                    {% for case in archived_cases %}
+                    <li class="case-item"
+                        onclick="selectCase('{{ case.id }}')"
+                        ondblclick="viewCaseDetails('{{ case.id }}')">
+                        <div class="case-info">
+                            <span class="case-number">{{ case.case_number }}</span>
+                            <span class="case-title">{{ case.title|truncatechars:25 }}</span>
+                            {% if case.location %}
+                            <span class="case-location">📍 {{ case.location }}</span>
+                            {% endif %}
+                        </div>
+                        <span class="case-status archived">Archived</span>
+                    </li>
+                    {% empty %}
+                    <li class="empty-folder">No archived cases</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="new-case-btn-container">
+            <a href="{% url 'create_case' %}" class="new-case-btn">
                 <i class="fas fa-plus"></i> New Case
-            </button>
-        </div>
-        
-        <div class="folder-tree">
-            <ul class="tree-view">
-                <li class="tree-item">
-                    <span class="tree-label active"><i class="fas fa-folder-open"></i> Active Cases</span>
-                    <ul class="subtree">
-                        {% for case in active_cases %}
-                        <li class="tree-item" data-case-id="{{ case.id }}">
-                            <span class="tree-label"><i class="fas fa-folder"></i> {{ case.case_number }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </li>
-                <li class="tree-item">
-                    <span class="tree-label"><i class="fas fa-folder"></i> Closed Cases</span>
-                    <ul class="subtree">
-                        {% for case in closed_cases %}
-                        <li class="tree-item" data-case-id="{{ case.id }}">
-                            <span class="tree-label"><i class="fas fa-folder"></i> {{ case.case_number }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </li>
-                <li class="tree-item">
-                    <span class="tree-label"><i class="fas fa-folder"></i> Archived Cases</span>
-                    <ul class="subtree">
-                        {% for case in archived_cases %}
-                        <li class="tree-item" data-case-id="{{ case.id }}">
-                            <span class="tree-label"><i class="fas fa-folder"></i> {{ case.case_number }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </li>
-            </ul>
+            </a>
         </div>
     </div>
 
-    <!-- Main Content Area -->
     <div class="main-content">
-        <div class="content-header">
-            <h2 id="caseTitle">Forensic Case Management System</h2>
-            <div class="header-actions">
-                <button id="refreshBtn" class="action-button">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
+        <div class="welcome-content">
+            <h2>Welcome, {{ user.email }}</h2>
+            <div class="dashboard-intro">
+                <p>This is your forensic case management dashboard. Here you can:</p>
+                <ul class="features-list">
+                    <li><i class="fas fa-plus-circle"></i> Create new forensic cases</li>
+                    <li><i class="fas fa-search"></i> Track active investigations</li>
+                    <li><i class="fas fa-folder"></i> Review closed and archived cases</li>
+                    <li><i class="fas fa-cog"></i> Manage all case details</li>
+                </ul>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ active_cases.count }}</div>
+                        <div class="stat-label">Active Cases</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ closed_cases.count }}</div>
+                        <div class="stat-label">Closed Cases</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ archived_cases.count }}</div>
+                        <div class="stat-label">Archived Cases</div>
+                    </div>
+                </div>
             </div>
+            
+            {% if selected_case %}
+            <div class="case-preview">
+                <div class="preview-header">
+                    <h3>Case Preview: {{ selected_case.case_number }}</h3>
+                </div>
+                <div class="preview-content">
+                    <div class="preview-row">
+                        <span class="preview-label">Title:</span>
+                        <span class="preview-value">{{ selected_case.title }}</span>
+                    </div>
+                    <div class="preview-row">
+                        <span class="preview-label">Status:</span>
+                        <span class="preview-value status-{{ selected_case.status }}">
+                            {{ selected_case.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="preview-row">
+                        <span class="preview-label">Created:</span>
+                        <span class="preview-value">{{ selected_case.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    {% if selected_case.location %}
+                    <div class="preview-row">
+                        <span class="preview-label">Location:</span>
+                        <span class="preview-value">📍 {{ selected_case.location }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="preview-actions">
+                        <a href="{% url 'case_detail' selected_case.id %}" class="btn btn-view">
+                            <i class="fas fa-eye"></i> View Full Details
+                        </a>
+                        <a href="{% url 'update_case' selected_case.id %}" class="btn btn-edit">
+                            <i class="fas fa-edit"></i> Edit Case
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
-
-        <div class="case-details" id="caseDetails">
-            <!-- Default view when no case is selected -->
-            <div class="welcome-message">
-                <img src="{% static 'accounts/images/forensic-icon.png' %}" alt="Forensic Icon">
-                <h3>Welcome to Forensic Case Management</h3>
-                <p>Select a case from the sidebar or create a new case to get started</p>
-            </div>
-
-            <!-- Case detail content will be loaded here dynamically -->
-        </div>
-    </div>
-</div>
-
-<!-- New Case Modal -->
-<div class="modal" id="newCaseModal">
-    <div class="modal-content">
-        <span class="close-modal">&times;</span>
-        <h3>Create New Forensic Case</h3>
-        <form id="caseForm" method="post" action="{% url 'create_case' %}">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="case_number">Case Number</label>
-                <input type="text" id="case_number" name="case_number" required>
-            </div>
-            <div class="form-group">
-                <label for="case_name">Case Name</label>
-                <input type="text" id="case_name" name="case_name" required>
-            </div>
-            <div class="form-group">
-                <label for="crime_type">Crime Type</label>
-                <select id="crime_type" name="crime_type" required>
-                    <option value="">Select crime type</option>
-                    <option value="cyber">Cyber Crime</option>
-                    <option value="homicide">Homicide</option>
-                    <option value="fraud">Financial Fraud</option>
-                    <option value="narcotics">Narcotics</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="description">Case Description</label>
-                <textarea id="description" name="description" rows="4" required></textarea>
-            </div>
-            <div class="form-group">
-                <label for="officer_in_charge">Officer In Charge</label>
-                <input type="text" id="officer_in_charge" name="officer_in_charge" value="{{ user.email }}" readonly>
-            </div>
-            <button type="submit" class="submit-button">Create Case</button>
-        </form>
-    </div>
-</div>
-
-<!-- Case Detail Template (Hidden) -->
-<div id="caseDetailTemplate" style="display:none;">
-    <div class="case-header">
-        <h3 class="detail-case-number">Case #: <span id="displayCaseNumber"></span></h3>
-        <div class="case-status-badge" id="statusBadge"></div>
-    </div>
-    
-    <div class="case-tabs">
-        <button class="tab-button active" data-tab="overview">Overview</button>
-        <button class="tab-button" data-tab="evidence">Evidence</button>
-        <button class="tab-button" data-tab="notes">Notes</button>
-        <button class="tab-button" data-tab="timeline">Timeline</button>
-    </div>
-    
-    <div class="tab-content active" id="overviewTab">
-        <!-- Overview content will be loaded here -->
-    </div>
-    
-    <div class="tab-content" id="evidenceTab">
-        <!-- Evidence content will be loaded here -->
-    </div>
-    
-    <div class="tab-content" id="notesTab">
-        <!-- Notes content will be loaded here -->
-    </div>
-    
-    <div class="tab-content" id="timelineTab">
-        <!-- Timeline content will be loaded here -->
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'accounts/js/case_management.js' %}"></script>
+<script>
+// Make folders expandable
+document.addEventListener('DOMContentLoaded', function() {
+    // Set click handlers for all folder headers
+    document.querySelectorAll('.folder-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const folderType = this.getAttribute('data-folder');
+            toggleFolder(folderType);
+        });
+    });
+    
+    // Open active cases by default
+    toggleFolder('active');
+});
+
+function toggleFolder(folderType) {
+    const folder = document.getElementById(`${folderType}-folder`);
+    const header = document.querySelector(`.folder-header[data-folder="${folderType}"]`);
+    const icon = header.querySelector('i');
+    
+    if (folder.style.display === 'none') {
+        folder.style.display = 'block';
+        header.classList.add('active');
+        icon.classList.replace('fa-folder', 'fa-folder-open');
+    } else {
+        folder.style.display = 'none';
+        header.classList.remove('active');
+        icon.classList.replace('fa-folder-open', 'fa-folder');
+    }
+}
+
+function selectCase(caseId) {
+    window.location.href = `{% url 'home' %}?case_id=${caseId}`;
+}
+
+function viewCaseDetails(caseId) {
+    window.location.href = `{% url 'case_detail' 0 %}`.replace('0', caseId);
+}
+</script>
 {% endblock %}

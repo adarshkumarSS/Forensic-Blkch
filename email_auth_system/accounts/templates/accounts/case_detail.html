@@ -1,0 +1,90 @@
+{% extends 'accounts/auth_base.html' %}
+{% load static %}
+
+{% block title %}Case Details - {{ case.case_number }}{% endblock %}
+
+{% block content %}
+<div class="case-detail-container">
+    <!-- Case Header with Title at Top -->
+    <div class="case-header">
+        <div class="case-title">
+            <h1>{{ case.case_number }} - {{ case.title }}</h1>
+            <div class="case-status {{ case.status }}">
+                {{ case.get_status_display }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Case Metadata Section -->
+    <div class="case-meta-grid">
+        <div class="meta-item">
+            <span class="meta-label">Created:</span>
+            <span class="meta-value">{{ case.created_at|date:"M d, Y" }}</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Updated:</span>
+            <span class="meta-value">{{ case.updated_at|date:"M d, Y" }}</span>
+        </div>
+        {% if case.incident_date %}
+        <div class="meta-item">
+            <span class="meta-label">Incident Date:</span>
+            <span class="meta-value">{{ case.incident_date|date:"M d, Y" }}</span>
+        </div>
+        {% endif %}
+        {% if case.location %}
+        <div class="meta-item">
+            <span class="meta-label">Location:</span>
+            <span class="meta-value">{{ case.location }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Case Content Sections -->
+    <div class="case-content">
+        <div class="case-section">
+            <h3>Description</h3>
+            <div class="section-content">
+                {{ case.description|linebreaks }}
+            </div>
+        </div>
+
+        {% if case.notes %}
+        <div class="case-section">
+            <h3>Notes</h3>
+            <div class="section-content">
+                {{ case.notes|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="case-actions">
+        <a href="{% url 'update_case' case.id %}" class="btn btn-edit">
+            <i class="icon">✏️</i> Edit Case
+        </a>
+        <a href="{% url 'delete_case' case.id %}" class="btn btn-delete">
+            <i class="icon">🗑️</i> Delete
+        </a>
+        {% if case.status == 'active' %}
+        <a href="{% url 'change_case_status' case.id 'closed' %}" class="btn btn-warning">
+            <i class="icon">🔒</i> Close Case
+        </a>
+        <a href="{% url 'change_case_status' case.id 'archived' %}" class="btn btn-secondary">
+            <i class="icon">📦</i> Archive
+        </a>
+        {% elif case.status == 'closed' %}
+        <a href="{% url 'change_case_status' case.id 'active' %}" class="btn btn-success">
+            <i class="icon">🔄</i> Reactivate
+        </a>
+        {% elif case.status == 'archived' %}
+        <a href="{% url 'change_case_status' case.id 'active' %}" class="btn btn-success">
+            <i class="icon">📤</i> Restore
+        </a>
+        {% endif %}
+        <a href="{% url 'home' %}" class="btn btn-back">
+            <i class="icon">←</i> Back to Cases
+        </a>
+    </div>
+</div>
+{% endblock %}
