@@ -18,13 +18,8 @@
                         onclick="selectCase('{{ case.id }}')"
                         ondblclick="viewCaseDetails('{{ case.id }}')">
                         <div class="case-info">
-                            <span class="case-number">{{ case.case_number }}</span>
-                            <span class="case-title">{{ case.title|truncatechars:25 }}</span>
-                            {% if case.location %}
-                            <span class="case-location">📍 {{ case.location }}</span>
-                            {% endif %}
-                        </div>
-                        <span class="case-status active">Active</span>
+                            <span class="case-number">{{ case.case_number }} - {{ case.title|linebreaksbr|striptags|truncatechars:60 }}</span>
+                        </div>                        
                     </li>
                     {% empty %}
                     <li class="empty-folder">No active cases</li>
@@ -44,13 +39,8 @@
                         onclick="selectCase('{{ case.id }}')"
                         ondblclick="viewCaseDetails('{{ case.id }}')">
                         <div class="case-info">
-                            <span class="case-number">{{ case.case_number }}</span>
-                            <span class="case-title">{{ case.title|truncatechars:25 }}</span>
-                            {% if case.location %}
-                            <span class="case-location">📍 {{ case.location }}</span>
-                            {% endif %}
-                        </div>
-                        <span class="case-status closed">Closed</span>
+                            <span class="case-number">{{ case.case_number }} - {{ case.title|linebreaksbr|striptags|truncatechars:60 }}</span>
+                        </div>                        
                     </li>
                     {% empty %}
                     <li class="empty-folder">No closed cases</li>
@@ -70,13 +60,9 @@
                         onclick="selectCase('{{ case.id }}')"
                         ondblclick="viewCaseDetails('{{ case.id }}')">
                         <div class="case-info">
-                            <span class="case-number">{{ case.case_number }}</span>
-                            <span class="case-title">{{ case.title|truncatechars:25 }}</span>
-                            {% if case.location %}
-                            <span class="case-location">📍 {{ case.location }}</span>
-                            {% endif %}
+                            <span class="case-number">{{ case.case_number }} - {{ case.title|linebreaksbr|striptags|truncatechars:60 }}</span>
                         </div>
-                        <span class="case-status archived">Archived</span>
+                        
                     </li>
                     {% empty %}
                     <li class="empty-folder">No archived cases</li>
@@ -85,67 +71,84 @@
             </div>
         </div>
 
-        <div class="new-case-btn-container">
+        <div class="sidebar-footer">
             <a href="{% url 'create_case' %}" class="new-case-btn">
                 <i class="fas fa-plus"></i> New Case
             </a>
+            <form action="{% url 'logout' %}" method="post" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </form>
         </div>
     </div>
 
     <div class="main-content">
-        <div class="welcome-content">
-            <h2>Welcome, {{ user.email }}</h2>
-            <div class="dashboard-intro">
-                <p>This is your forensic case management dashboard. Here you can:</p>
-                <ul class="features-list">
-                    <li><i class="fas fa-plus-circle"></i> Create new forensic cases</li>
-                    <li><i class="fas fa-search"></i> Track active investigations</li>
-                    <li><i class="fas fa-folder"></i> Review closed and archived cases</li>
-                    <li><i class="fas fa-cog"></i> Manage all case details</li>
-                </ul>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">{{ active_cases.count }}</div>
-                        <div class="stat-label">Active Cases</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">{{ closed_cases.count }}</div>
-                        <div class="stat-label">Closed Cases</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">{{ archived_cases.count }}</div>
-                        <div class="stat-label">Archived Cases</div>
+        <!-- Welcome Content -->
+        <div id="welcomeContent" class="welcome-content" {% if selected_case %}style="display: none;"{% endif %}>
+            <div class="welcome-card">
+                <h2>Welcome, {{ user.email }}</h2>
+                <div class="dashboard-intro">
+                    <p>This is your forensic case management dashboard. Here you can:</p>
+                    <ul class="features-list">
+                        <li><i class="fas fa-plus-circle"></i> Create new forensic cases</li>
+                        <li><i class="fas fa-search"></i> Track active investigations</li>
+                        <li><i class="fas fa-folder"></i> Review closed and archived cases</li>
+                        <li><i class="fas fa-cog"></i> Manage all case details</li>
+                    </ul>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">{{ active_cases.count }}</div>
+                            <div class="stat-label">Active Cases</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ closed_cases.count }}</div>
+                            <div class="stat-label">Closed Cases</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ archived_cases.count }}</div>
+                            <div class="stat-label">Archived Cases</div>
+                        </div>
                     </div>
                 </div>
             </div>
-            
+        </div>
+        
+        <!-- Case Preview -->
+        <div id="casePreview" class="case-preview-container" {% if not selected_case %}style="display: none;"{% endif %}>
             {% if selected_case %}
-            <div class="case-preview">
+            <div class="case-preview-card">
                 <div class="preview-header">
                     <h3>Case Preview: {{ selected_case.case_number }}</h3>
+                    <a href="{% url 'home' %}" class="btn btn-back">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
                 </div>
                 <div class="preview-content">
-                    <div class="preview-row">
-                        <span class="preview-label">Title:</span>
-                        <span class="preview-value">{{ selected_case.title }}</span>
+                    <div class="preview-grid">
+                        <div class="preview-row">
+                            <span class="preview-label">Title:</span>
+                            <span class="preview-value">{{ selected_case.title }}</span>
+                        </div>
+                        <div class="preview-row">
+                            <span class="preview-label">Status:</span>
+                            <span class="preview-value status-{{ selected_case.status }}">
+                                {{ selected_case.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="preview-row">
+                            <span class="preview-label">Created:</span>
+                            <span class="preview-value">{{ selected_case.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        {% if selected_case.location %}
+                        <div class="preview-row">
+                            <span class="preview-label">Location:</span>
+                            <span class="preview-value">📍 {{ selected_case.location }}</span>
+                        </div>
+                        {% endif %}
                     </div>
-                    <div class="preview-row">
-                        <span class="preview-label">Status:</span>
-                        <span class="preview-value status-{{ selected_case.status }}">
-                            {{ selected_case.get_status_display }}
-                        </span>
-                    </div>
-                    <div class="preview-row">
-                        <span class="preview-label">Created:</span>
-                        <span class="preview-value">{{ selected_case.created_at|date:"M d, Y" }}</span>
-                    </div>
-                    {% if selected_case.location %}
-                    <div class="preview-row">
-                        <span class="preview-label">Location:</span>
-                        <span class="preview-value">📍 {{ selected_case.location }}</span>
-                    </div>
-                    {% endif %}
                     <div class="preview-actions">
                         <a href="{% url 'case_detail' selected_case.id %}" class="btn btn-view">
                             <i class="fas fa-eye"></i> View Full Details
@@ -162,6 +165,46 @@
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+.sidebar-footer {
+    margin-top: auto;
+    padding: 1rem;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.logout-form {
+    margin: 0;
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem;
+    background-color: transparent;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+    background-color: #f8d7da;
+}
+
+.logout-btn i {
+    font-size: 1rem;
+}
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
 // Make folders expandable
@@ -176,6 +219,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Open active cases by default
     toggleFolder('active');
+
+    // Add logout confirmation
+    document.querySelector('.logout-form')?.addEventListener('submit', function(e) {
+        if (!confirm('Are you sure you want to logout?')) {
+            e.preventDefault();
+        }
+    });
 });
 
 function toggleFolder(folderType) {
@@ -195,6 +245,8 @@ function toggleFolder(folderType) {
 }
 
 function selectCase(caseId) {
+    document.getElementById('welcomeContent').style.display = 'none';
+    document.getElementById('casePreview').style.display = 'block';
     window.location.href = `{% url 'home' %}?case_id=${caseId}`;
 }
 

@@ -52,6 +52,7 @@ def logout_view(request):
 
 @login_required
 def home(request):
+
     active_cases = Case.objects.filter(user=request.user, status='active').order_by('-created_at')
     closed_cases = Case.objects.filter(user=request.user, status='closed').order_by('-created_at')
     archived_cases = Case.objects.filter(user=request.user, status='archived').order_by('-created_at')
@@ -113,4 +114,5 @@ def change_case_status(request, pk, status):
 @login_required
 def case_detail(request, pk):
     case = get_object_or_404(Case, pk=pk, user=request.user)
+    case.title = case.title.replace('\n', ' ').replace('\r', ' ')
     return render(request, 'accounts/case_detail.html', {'case': case})
