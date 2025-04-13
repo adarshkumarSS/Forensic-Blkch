@@ -1,0 +1,28 @@
+{% extends "accounts/auth_base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Connect Pinata Account</h2>
+    <p>Enter your Pinata API credentials to enable IPFS file storage.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_api_key">API Key</label>
+            {{ form.api_key }}
+            <small class="form-text text-muted">Get this from your Pinata account dashboard</small>
+        </div>
+        <div class="form-group">
+            <label for="id_api_secret">API Secret</label>
+            {{ form.api_secret }}
+        </div>
+        <div class="form-group">
+            <label for="id_jwt_token">JWT Token</label>
+            {{ form.jwt_token }}
+            <small class="form-text text-muted">Generate this in your Pinata account under API Keys</small>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Credentials</button>
+        <a href="{% url 'home' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

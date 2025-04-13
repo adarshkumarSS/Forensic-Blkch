@@ -269,3 +269,188 @@ document.addEventListener('DOMContentLoaded', function() {
         return types[type] || type;
     }
 });
+document.addEventListener('DOMContentLoaded', function() {
+    // File upload handling
+    const uploadForm = document.getElementById('file-upload-form');
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('file-input');
+            const uploadButton = document.getElementById('upload-button');
+            const progressBar = document.getElementById('progress-bar');
+            const progressContainer = document.getElementById('upload-progress');
+            
+            if (!fileInput.files.length) {
+                alert('Please select a file to upload');
+                return;
+            }
+            
+            const formData = new FormData(uploadForm);
+            const xhr = new XMLHttpRequest();
+            
+            // Disable upload button during upload
+            uploadButton.disabled = true;
+            uploadButton.textContent = 'Uploading...';
+            progressContainer.style.display = 'block';
+            
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressBar.style.width = percentComplete + '%';
+                    progressBar.setAttribute('aria-valuenow', percentComplete);
+                }
+            });
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    uploadButton.disabled = false;
+                    uploadButton.textContent = 'Upload';
+                    progressContainer.style.display = 'none';
+                    
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        
+                        if (response.success) {
+                            // Add new file to the list
+                            addFileToUI(response.file);
+                            fileInput.value = ''; // Clear file input
+                        } else {
+                            alert('Upload failed: ' + (response.error || 'Unknown error'));
+                        }
+                    } catch (e) {
+                        alert('Error processing upload response');
+                    }
+                }
+            };
+            
+            xhr.open('POST', window.location.pathname + 'upload/', true);
+            xhr.send(formData);
+        });
+    }
+    
+    // File deletion handling
+    document.querySelectorAll('.delete-file').forEach(button => {
+        button.addEventListener('click', function() {
+            const fileItem = this.closest('.file-item');
+            const fileId = fileItem.dataset.fileId;
+            const cid = fileItem.dataset.cid;
+            
+            if (confirm('Are you sure you want to delete this file?')) {
+                fetch(window.location.pathname + 'files/' + fileId + '/', {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ cid: cid })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        fileItem.remove();
+                    } else {
+                        alert('Deletion failed: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Deletion failed');
+                });
+            }
+        });
+    });
+    
+    // Helper function to add new file to UI
+    function addFileToUI(file) {
+        const filesContainer = document.getElementById('files-container');
+        const emptyMessage = filesContainer.querySelector('p');
+        
+        if (emptyMessage) {
+            emptyMessage.remove();
+        }
+        
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.dataset.fileId = file.id;
+        fileItem.dataset.cid = file.cid;
+        
+        let previewContent = '';
+        if (file.type.startsWith('image/')) {
+            previewContent = `<img src="https://gateway.pinata.cloud/ipfs/${file.cid}" alt="${file.name}">`;
+        } else {
+            previewContent = '<div class="file-icon"><i class="fas fa-file"></i></div>';
+        }
+        
+        fileItem.innerHTML = `
+            <div class="file-preview">
+                ${previewContent}
+            </div>
+            <div class="file-info">
+                <h5>${file.name}</h5>
+                <p>Type: ${file.type}</p>
+                <p>Size: ${formatFileSize(file.size)}</p>
+                <p>Uploaded: ${new Date(file.uploaded_at).toLocaleString()}</p>
+                <p>CID: <code>${file.cid}</code></p>
+                ${file.is_disclosure ? '<span class="badge badge-warning">Disclosure</span>' : ''}
+            </div>
+            <div class="file-actions">
+                <a href="https://gateway.pinata.cloud/ipfs/${file.cid}" target="_blank" class="btn btn-sm btn-info">View</a>
+                <button class="btn btn-sm btn-danger delete-file">Delete</button>
+            </div>
+        `;
+        
+        filesContainer.appendChild(fileItem);
+        
+        // Add event listener to new delete button
+        fileItem.querySelector('.delete-file').addEventListener('click', function() {
+            if (confirm('Are you sure you want to delete this file?')) {
+                fetch(window.location.pathname + 'files/' + file.id + '/', {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ cid: file.cid })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        fileItem.remove();
+                    } else {
+                        alert('Deletion failed: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Deletion failed');
+                });
+            }
+        });
+    }
+    
+    // Helper function to format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});

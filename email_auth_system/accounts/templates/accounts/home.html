@@ -3,7 +3,11 @@
 
 {% block content %}
 <div class="dashboard-container">
+  
     <div class="sidebar">
+        <br>
+        <br>
+        <br>
         <!-- Case Folders -->
         <div class="case-folders">
             <!-- Active Cases -->
@@ -96,7 +100,7 @@
                         <li><i class="fas fa-folder"></i> Review closed and archived cases</li>
                         <li><i class="fas fa-cog"></i> Manage all case details</li>
                     </ul>
-                    
+
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-value">{{ active_cases.count }}</div>
@@ -111,10 +115,26 @@
                             <div class="stat-label">Archived Cases</div>
                         </div>
                     </div>
+
+                    {% if not has_credentials %}
+                    <div class="alert alert-warning mt-4">
+                        <br>
+                        <p>You need to connect your Pinata account to upload files.</p>
+                        <br>
+                        <a href="{% url 'pinata_connect' %}" class="btn btn-primary">Connect Pinata Account</a>
+                    </div>
+                    {% endif %}
+
+                    <div class="case-actions mt-3">
+                        {% if has_credentials %}
+                        <a href="{% url 'pinata_connect' %}" class="btn btn-info">Update Pinata Credentials</a>
+                        {% endif %}
+                    </div>
+                    </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Case Preview -->
         <div id="casePreview" class="case-preview-container" {% if not selected_case %}style="display: none;"{% endif %}>
             {% if selected_case %}
@@ -216,20 +236,16 @@
 
 {% block extra_js %}
 <script>
-// Make folders expandable
 document.addEventListener('DOMContentLoaded', function() {
-    // Set click handlers for all folder headers
     document.querySelectorAll('.folder-header').forEach(header => {
         header.addEventListener('click', function() {
             const folderType = this.getAttribute('data-folder');
             toggleFolder(folderType);
         });
     });
-    
-    // Open active cases by default
+
     toggleFolder('active');
 
-    // Add logout confirmation
     document.querySelector('.logout-form')?.addEventListener('submit', function(e) {
         if (!confirm('Are you sure you want to logout?')) {
             e.preventDefault();
@@ -241,7 +257,7 @@ function toggleFolder(folderType) {
     const folder = document.getElementById(`${folderType}-folder`);
     const header = document.querySelector(`.folder-header[data-folder="${folderType}"]`);
     const icon = header.querySelector('i');
-    
+
     if (folder.style.display === 'none') {
         folder.style.display = 'block';
         header.classList.add('active');

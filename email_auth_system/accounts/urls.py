@@ -12,4 +12,6 @@ urlpatterns = [
     path('cases/<int:pk>/update/', views.update_case, name='update_case'),
     path('cases/<int:pk>/delete/', views.delete_case, name='delete_case'),
     path('cases/<int:pk>/status/<str:status>/', views.change_case_status, name='change_case_status'),
+
+    path('pinata/connect/', views.pinata_connect, name='pinata_connect'),
 ]

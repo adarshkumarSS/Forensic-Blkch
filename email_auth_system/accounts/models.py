@@ -30,34 +30,6 @@ class CustomUser(AbstractUser):
 
 User = get_user_model()
 
-class ForensicCase(models.Model):
-    CASE_STATUS = (
-        ('active', 'Active'),
-        ('closed', 'Closed'),
-        ('archived', 'Archived'),
-    )
-    
-    CRIME_TYPES = (
-        ('cyber', 'Cyber Crime'),
-        ('homicide', 'Homicide'),
-        ('fraud', 'Financial Fraud'),
-        ('narcotics', 'Narcotics'),
-        ('other', 'Other'),
-    )
-    
-    case_number = models.CharField(max_length=50, unique=True)
-    case_name = models.CharField(max_length=100)
-    crime_type = models.CharField(max_length=20, choices=CRIME_TYPES)
-    description = models.TextField()
-    officer_in_charge = models.ForeignKey(User, on_delete=models.PROTECT)
-    status = models.CharField(max_length=10, choices=CASE_STATUS, default='active')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return f"{self.case_number} - {self.case_name}"
-
-
 class Case(models.Model):
     CASE_STATUS = (
         ('active', 'Active'),
@@ -81,3 +53,27 @@ class Case(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+class CaseFile(models.Model):
+    case = models.ForeignKey(Case, on_delete=models.CASCADE, related_name='files')
+    name = models.CharField(max_length=255)
+    file_type = models.CharField(max_length=100)
+    pinata_cid = models.CharField(max_length=255)
+    pinata_id = models.CharField(max_length=255)
+    size = models.BigIntegerField()
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    is_disclosure = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.name} (Case: {self.case.title})"
+
+class PinataCredentials(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    api_key = models.CharField(max_length=255)
+    api_secret = models.CharField(max_length=255)
+    jwt_token = models.CharField(max_length=512)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Pinata credentials for {self.user.username}"
